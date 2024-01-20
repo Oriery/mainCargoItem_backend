@@ -58,52 +58,37 @@ DECLARE
 BEGIN
   -- get tree
   CREATE TEMP TABLE subtree AS
-    SELECT * FROM get_subtree(root_id);
+    SELECT 
+      *, 
+      TRUE AS decendantsHaveSameRoute 
+    FROM get_subtree(root_id);
 
   -- get max depth
   SELECT max(st.depth) INTO max_depth FROM subtree st;
 
-  CREATE TEMP TABLE inseparability (
-    id integer,
-    containedIn_id integer,
-    depth integer,
-    fromLocation_id integer,
-    toLocation_id integer,
-    sameRouteAsParent boolean,
-    decendantsHaveSameRoute boolean
-  );
-
-  -- get inseparability
+  -- set decendantsHaveSameRoute
   FOR i IN REVERSE max_depth..0 LOOP
-    INSERT INTO inseparability
-      SELECT
-        s.id,
-        s.containedIn_id,
-        s.depth,
-        s.fromLocation_id,
-        s.toLocation_id,
-        s.sameRouteAsParent,
-        NOT EXISTS (
-          SELECT
-            *
-          FROM
-            inseparability i2
-          WHERE
-            i2.containedIn_id = s.id
-            AND (i2.decendantsHaveSameRoute = false
-            OR i2.samerouteasparent = false)
-        ) AS decendantsHaveSameRoute
-      FROM
-        subtree s
-      WHERE
-        s.depth = i;
+    UPDATE subtree i1
+    SET
+      decendantsHaveSameRoute = NOT EXISTS (
+        SELECT
+          *
+        FROM
+          subtree i2
+        WHERE
+          i2.containedIn_id = i1.id
+          AND (i2.decendantsHaveSameRoute = false
+          OR i2.samerouteasparent = false)
+      )
+    WHERE
+      i1.depth = i;
   END LOOP;
 
   RETURN QUERY
     SELECT
       *
     FROM
-      inseparability;
+      subtree;
   
 END;
 $$ LANGUAGE plpgsql;
