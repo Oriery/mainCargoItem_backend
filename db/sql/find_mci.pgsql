@@ -42,14 +42,15 @@ FROM
   subtree_cte;
 $$ LANGUAGE SQL;
 
-DROP FUNCTION IF EXISTS get_inseparability (integer);
+DROP FUNCTION IF EXISTS get_mci_info_tree (integer);
 
 CREATE
-OR REPLACE FUNCTION get_inseparability (root_id integer) RETURNS TABLE (
+OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (
   id integer,
   containedIn_id integer,
   depth integer,
-  decendantsHaveSameRoute boolean
+  is_mci boolean
+  --mci_id integer,
 ) AS $$
 DECLARE
   max_depth integer;
@@ -58,7 +59,8 @@ BEGIN
   CREATE TEMP TABLE subtree AS
     SELECT 
       *, 
-      TRUE AS decendantsHaveSameRoute 
+      TRUE AS decendantsHaveSameRoute,
+      FALSE AS is_mci
     FROM get_subtree(root_id);
 
   -- get max depth
@@ -82,12 +84,24 @@ BEGIN
       i1.depth = i;
   END LOOP;
 
+  -- set is_mci
+  UPDATE subtree i
+  SET
+    is_mci = -- true if parent's decendantsHaveSameRoute is false and item's decendantsHaveSameRoute is true
+      (SELECT
+        i2.decendantsHaveSameRoute
+      FROM
+        subtree i2
+      WHERE
+        i2.id = i.containedIn_id) = false
+      AND i.decendantsHaveSameRoute = true;
+
   RETURN QUERY
     SELECT
       s.id,
       s.containedIn_id,
       s.depth,
-      s.decendantsHaveSameRoute
+      s.is_mci
     FROM
       subtree s;
 
@@ -99,4 +113,4 @@ $$ LANGUAGE plpgsql;
 SELECT
   *
 FROM
-  get_inseparability (0);
+  get_mci_info_tree (0);
