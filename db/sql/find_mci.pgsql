@@ -86,15 +86,10 @@ BEGIN
 
   -- set is_mci
   UPDATE subtree i
-  SET
-    is_mci = -- true if parent's decendantsHaveSameRoute is false and item's decendantsHaveSameRoute is true
-      (SELECT
-        i2.decendantsHaveSameRoute
-      FROM
-        subtree i2
-      WHERE
-        i2.id = i.containedIn_id) = false
-      AND i.decendantsHaveSameRoute = true;
+  SET is_mci = p.decendantsHaveSameRoute = false AND i.decendantsHaveSameRoute = true
+  FROM subtree p
+  WHERE i.containedIn_id = p.id;
+
 
   RETURN QUERY
     SELECT
