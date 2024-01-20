@@ -1,0 +1,13 @@
+id;type_id;name;
+1000;0;iPhone 15;
+1001;0;iPhone 15 Pro;
+1002;0;iPhone 15 Pro Max;
+0;1;20ft Standard Container;
+1;1;40ft Standard Container;
+2;1;40ft High Cube Container;
+3;1;45ft High Cube Container;
+4;1;450x300x200mm Carton Box;
+5;1;450x300x250mm Carton Box;
+6;1;800x600mm Pallet;
+7;1;1000x1200mm Pallet;
+8;1;1200x1200mm Pallet;

@@ -5,14 +5,23 @@
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
   "private": true,
+  "scripts": {
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "dev": "run-p 'watch'",
+    "start:db": "docker-compose up -d",
+    "create:db": "docker exec maincargoitem_backend-db-1 psql -U postgres -c \"CREATE DATABASE mci;\"",
+    "deploy:db": "cds deploy --profile pg",
+    "fully-delete:db": "docker-compose down",
+    "start-and-deploy:db": "run-s 'fully-delete:db' 'start:db' && sleep 2 && run-s 'create:db' 'deploy:db'"
+  },
   "dependencies": {
+    "@cap-js/postgres": "^1.4.1",
     "@sap/cds": "^7",
     "express": "^4"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^1"
-  },
-  "scripts": {
-    "start": "cds-serve"
+    "@cap-js/sqlite": "^1",
+    "npm-run-all": "^4.1.5"
   }
 }
