@@ -47,10 +47,8 @@ DROP FUNCTION IF EXISTS get_mci_info_tree (integer);
 CREATE
 OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (
   id integer,
-  containedIn_id integer,
-  depth integer,
-  is_mci boolean
-  --mci_id integer,
+  is_mci boolean,
+  mci_id integer
 ) AS $$
 DECLARE
   max_depth integer;
@@ -60,7 +58,8 @@ BEGIN
     SELECT 
       *, 
       TRUE AS decendantsHaveSameRoute,
-      FALSE AS is_mci
+      FALSE AS is_mci,
+      CAST(NULL AS INTEGER) AS mci_id
     FROM get_subtree(root_id);
 
   -- get max depth
@@ -90,13 +89,20 @@ BEGIN
   FROM subtree p
   WHERE i.containedIn_id = p.id;
 
+  -- set mci_id
+  FOR i IN 0..max_depth LOOP
+    UPDATE subtree i1
+    SET mci_id = CASE WHEN i1.is_mci THEN i1.id ELSE p.mci_id END
+    FROM subtree p
+    WHERE i1.depth = i AND i1.containedIn_id = p.id;
+  END LOOP;
+
 
   RETURN QUERY
     SELECT
       s.id,
-      s.containedIn_id,
-      s.depth,
-      s.is_mci
+      s.is_mci,
+      s.mci_id
     FROM
       subtree s;
 

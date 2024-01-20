@@ -4,3 +4,5 @@
 2) find all items with samerouteasparent
 3) for each such item set all of his ancestors's decendantsHaveSameRoute to false
 This is faster if most of items have same route as parent
+
+[] try ordered update (by depth) instead of loop
