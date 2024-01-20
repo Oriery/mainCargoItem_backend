@@ -1,2 +1,6 @@
 [] add index on containedIn_id of Item
 [] maybe add field routeContainer to improve speed of retrieving full tree
+[] maybe faster so: 1) set all decendantsHaveSameRoute to true
+2) find all items with samerouteasparent
+3) for each such item set all of his ancestors's decendantsHaveSameRoute to false
+This is faster if most of items have same route as parent

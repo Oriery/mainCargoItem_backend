@@ -5,8 +5,6 @@ OR REPLACE FUNCTION get_subtree (root_id integer) RETURNS TABLE (
   id integer,
   containedIn_id integer,
   depth integer,
-  fromLocation_id integer,
-  toLocation_id integer,
   sameRouteAsParent boolean
 ) AS $$
   WITH RECURSIVE
@@ -36,7 +34,10 @@ OR REPLACE FUNCTION get_subtree (root_id integer) RETURNS TABLE (
       JOIN subtree_cte p ON c.containedIn_id = p.id
   )
 SELECT
-  *
+  id,
+  containedIn_id,
+  depth,
+  sameRouteAsParent
 FROM
   subtree_cte;
 $$ LANGUAGE SQL;
@@ -48,9 +49,6 @@ OR REPLACE FUNCTION get_inseparability (root_id integer) RETURNS TABLE (
   id integer,
   containedIn_id integer,
   depth integer,
-  fromLocation_id integer,
-  toLocation_id integer,
-  sameRouteAsParent boolean,
   decendantsHaveSameRoute boolean
 ) AS $$
 DECLARE
@@ -86,9 +84,14 @@ BEGIN
 
   RETURN QUERY
     SELECT
-      *
+      s.id,
+      s.containedIn_id,
+      s.depth,
+      s.decendantsHaveSameRoute
     FROM
-      subtree;
+      subtree s;
+
+  DROP TABLE subtree;
   
 END;
 $$ LANGUAGE plpgsql;
