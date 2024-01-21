@@ -85,16 +85,16 @@ BEGIN
 
   -- set is_mci
   UPDATE subtree i
-  SET is_mci = p.decendantsHaveSameRoute = false AND i.decendantsHaveSameRoute = true
+  SET is_mci = i.decendantsHaveSameRoute = true AND (i.containedIn_id IS NULL OR p.decendantsHaveSameRoute = false)
   FROM subtree p
-  WHERE i.containedIn_id = p.id;
+  WHERE i.containedIn_id = p.id OR i.containedIn_id IS NULL;
 
   -- set mci_id
   FOR i IN 0..max_depth LOOP
     UPDATE subtree i1
     SET mci_id = CASE WHEN i1.is_mci THEN i1.id ELSE p.mci_id END
     FROM subtree p
-    WHERE i1.depth = i AND i1.containedIn_id = p.id;
+    WHERE i1.depth = i AND (i1.containedIn_id = p.id OR i1.containedIn_id IS NULL);
   END LOOP;
 
 
