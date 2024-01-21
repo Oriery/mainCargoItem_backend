@@ -5,39 +5,45 @@ OR REPLACE FUNCTION get_subtree (root_id integer) RETURNS TABLE (
   id integer,
   containedIn_id integer,
   depth integer,
-  sameRouteAsParent boolean
+  sameRouteAsParent boolean,
+  isProduct boolean
 ) AS $$
   WITH RECURSIVE
   subtree_cte AS (
     SELECT
-      id,
+      i.id,
       containedIn_id,
       0 as depth,
-	  fromLocation_id,
-	  toLocation_id,
-      false as sameRouteAsParent
+      fromLocation_id,
+      toLocation_id,
+      false as sameRouteAsParent,
+      ic.type_id = 0 as isProduct
     FROM
-      oriery_mci_item
+      oriery_mci_item i
+      JOIN oriery_mci_itemclass ic ON i.class_id = ic.id
     WHERE
-      id = root_id
+      i.id = root_id
     UNION ALL
     SELECT
-      c.id,
-      c.containedIn_id,
+      i.id,
+      i.containedIn_id,
       p.depth + 1 as depth,
-	  c.fromLocation_id,
-	  c.toLocation_id,
-      c.fromLocation_id = p.fromLocation_id
-      AND c.toLocation_id = p.toLocation_id AS sameRouteAsParent
+      i.fromLocation_id,
+      i.toLocation_id,
+      i.fromLocation_id = p.fromLocation_id
+      AND i.toLocation_id = p.toLocation_id AS sameRouteAsParent,
+      ic.type_id = 0 as isProduct
     FROM
-      oriery_mci_item c
-      JOIN subtree_cte p ON c.containedIn_id = p.id
+      oriery_mci_item i
+      JOIN subtree_cte p ON i.containedIn_id = p.id
+      JOIN oriery_mci_itemclass ic ON i.class_id = ic.id
   )
 SELECT
   id,
   containedIn_id,
   depth,
-  sameRouteAsParent
+  sameRouteAsParent,
+  isProduct
 FROM
   subtree_cte;
 $$ LANGUAGE SQL;
@@ -45,11 +51,7 @@ $$ LANGUAGE SQL;
 DROP FUNCTION IF EXISTS get_mci_info_tree (integer);
 
 CREATE
-OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (
-  id integer,
-  is_mci boolean,
-  mci_id integer
-) AS $$
+OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (id integer, is_mci boolean, mci_id integer) AS $$
 DECLARE
   max_depth integer;
 BEGIN
@@ -63,6 +65,7 @@ BEGIN
     SELECT 
       *, 
       TRUE AS decendantsHaveSameRoute,
+      FALSE AS containesProducts,
       FALSE AS is_mci,
       CAST(NULL AS INTEGER) AS mci_id
     FROM get_subtree(root_id);
@@ -74,7 +77,7 @@ BEGIN
   FOR i IN REVERSE max_depth..0 LOOP
     UPDATE subtree i1
     SET
-      decendantsHaveSameRoute = NOT EXISTS (
+      decendantsHaveSameRoute = NOT EXISTS ( -- TODO: replace with JOIN if possible
         SELECT
           *
         FROM
@@ -83,6 +86,15 @@ BEGIN
           i2.containedIn_id = i1.id
           AND (i2.decendantsHaveSameRoute = false
           OR i2.samerouteasparent = false)
+      ),
+      containesProducts = i1.isProduct OR EXISTS ( -- TODO: replace with JOIN if possible
+        SELECT
+          *
+        FROM
+          subtree i2
+        WHERE
+          i2.containedIn_id = i1.id
+          AND i2.containesProducts = true
       )
     WHERE
       i1.depth = i;
@@ -90,7 +102,10 @@ BEGIN
 
   -- set is_mci
   UPDATE subtree i
-  SET is_mci = i.decendantsHaveSameRoute = true AND (i.containedIn_id IS NULL OR p.decendantsHaveSameRoute = false)
+  SET is_mci = 
+    i.decendantsHaveSameRoute = true AND 
+    (i.containedIn_id IS NULL OR p.decendantsHaveSameRoute = false) AND 
+    i.containesProducts = true
   FROM subtree p
   WHERE i.containedIn_id = p.id OR i.containedIn_id IS NULL;
 
@@ -119,4 +134,4 @@ $$ LANGUAGE plpgsql;
 SELECT
   *
 FROM
-  get_mci_info_tree (40);
+  get_mci_info_tree (30);
