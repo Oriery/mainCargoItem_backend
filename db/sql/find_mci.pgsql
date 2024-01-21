@@ -53,6 +53,11 @@ OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (
 DECLARE
   max_depth integer;
 BEGIN
+  -- if no such item, throw error
+  IF NOT EXISTS (SELECT * FROM oriery_mci_item i WHERE i.id = root_id) THEN
+    RAISE EXCEPTION 'No item with id %', root_id;
+  END IF;
+
   -- get tree
   CREATE TEMP TABLE subtree AS
     SELECT 
@@ -114,4 +119,4 @@ $$ LANGUAGE plpgsql;
 SELECT
   *
 FROM
-  get_mci_info_tree (0);
+  get_mci_info_tree (40);
