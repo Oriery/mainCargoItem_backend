@@ -17,49 +17,57 @@ entity ItemType {
 }
 
 entity Item {
-  key id               : Integer64 @readonly;
-      class            : Association to ItemClass;
-      containedIn      : Association to Item;
-      fromLocation     : Association to Location;
-      toLocation       : Association to Location;
-      mci              : Association to MainCargoItem;
+  key id           : Integer64 @readonly;
+      class        : Association to ItemClass;
+      containedIn  : Association to Item;
+      fromLocation : Association to Location;
+      toLocation   : Association to Location;
+      mci          : Association to MainCargoItem;
 }
 
 // TODO: current location/truck should be a field of Item instead of a separate entity?
 
 entity MainCargoItem {
-  key id               : Integer @readonly;
-      item             : Association to Item;
-      fromLocation     : Association to Location;
-      toLocation       : Association to Location;
-      status           : Association to CargoStatus;
+  key item             : Association to Item;
+      status           : Association to MciStatus;
       nowTransportedBy : Association to Transport;
+      nowLocatedAt     : Association to Location;
 }
 
-entity CargoStatus {
+entity MciStatus {
   key id   : Integer @readonly;
       name : String(111) not null;
 }
 
+entity Transport2RootItem {
+  key transport : Association to Transport;
+  key item      : Association to Item;
+}
+
+entity Location2RootItem {
+  key location : Association to Location;
+  key item     : Association to Item;
+}
+
 entity Transport {
-  key id              : Integer @readonly;
+  key id       : Integer @readonly;
       // a truck is either at a location or on a route
-      currentRoute    : Association to Route;
-      currentLocation : Association to Location;
+      route    : Association to Route;
+      location : Association to Location;
 }
 
 entity Route {
   key id           : Integer @readonly;
       fromLocation : Association to Location; // The very first location
       toLocation   : Association to Location; // The very last location
-      // can have multiple waypoints in between
+// can have multiple waypoints in between
 }
 
 entity Waypoint {
-  key id           : Integer @readonly;
-      route        : Association to Route;
-      location     : Association to Location;
-      sequence     : Integer;
-      arrivalTime  : DateTime;
-      departureTime: DateTime;
+  key id            : Integer @readonly;
+      route         : Association to Route;
+      location      : Association to Location;
+      sequence      : Integer;
+      arrivalTime   : DateTime;
+      departureTime : DateTime;
 }
