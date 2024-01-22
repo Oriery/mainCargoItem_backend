@@ -123,11 +123,11 @@ BEGIN
   -- set is_mci
   UPDATE subtree i
   SET is_mci = 
-    i.decendantsHaveSameRoute = true AND 
-    (i.containedIn_id IS NULL OR p.decendantsHaveSameRoute = false) AND 
-    i.containesProducts = true
+    i.decendantsHaveSameRoute = true
   FROM subtree p
-  WHERE i.containedIn_id = p.id;
+  WHERE i.containedIn_id = p.id AND
+    p.decendantsHaveSameRoute = false AND 
+    i.containesProducts = true;
 
   RAISE NOTICE 'Duration of "set is_mci": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
@@ -161,8 +161,3 @@ BEGIN
   
 END;
 $$ LANGUAGE plpgsql;
-
-SELECT
-  *
-FROM
-  get_mci_info_tree (1000001);
