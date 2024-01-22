@@ -7,6 +7,8 @@ This is faster if most of items have same route as parent
 
 [] Location (as a storage) and Transport better be the same entity to reduce complexity
 
-[] Make get_mci_info_tree take an array of id to find all mci on a whole container ship for example
+[+] Make get_mci_info_tree take an array of id to find all mci on a whole container ship for example
 
 [+] auto create indexes and functions with script
+
+[] Store a temp table in memory? As an array?

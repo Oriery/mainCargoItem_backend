@@ -1,9 +1,9 @@
-DROP FUNCTION IF EXISTS get_subtree (integer);
+DROP FUNCTION IF EXISTS get_subtree (bigint[]);
 
 CREATE
-OR REPLACE FUNCTION get_subtree (root_id integer) RETURNS TABLE (
-  id integer,
-  containedIn_id integer,
+OR REPLACE FUNCTION get_subtree (root_ids bigint[]) RETURNS TABLE (
+  id bigint,
+  containedIn_id bigint,
   depth integer,
   sameRouteAsParent boolean,
   isProduct boolean
@@ -22,7 +22,7 @@ OR REPLACE FUNCTION get_subtree (root_id integer) RETURNS TABLE (
       oriery_mci_item i
       JOIN oriery_mci_itemclass ic ON i.class_id = ic.id
     WHERE
-      i.id = root_id
+      i.id = ANY(root_ids)
     UNION ALL
     SELECT
       i.id,
@@ -48,19 +48,14 @@ FROM
   subtree_cte;
 $$ LANGUAGE SQL;
 
-DROP FUNCTION IF EXISTS get_mci_info_tree (integer);
+DROP FUNCTION IF EXISTS get_mci_info_tree (bigint[]);
 
 CREATE
-OR REPLACE FUNCTION get_mci_info_tree (root_id integer) RETURNS TABLE (id integer, is_mci boolean, mci_id integer) AS $$
+OR REPLACE FUNCTION get_mci_info_tree (root_ids bigint[]) RETURNS TABLE (id bigint, is_mci boolean, mci_id bigint) AS $$
 DECLARE
   max_depth integer;
   start_time TIMESTAMP;
 BEGIN
-  -- if no such item, throw error
-  IF NOT EXISTS (SELECT * FROM oriery_mci_item i WHERE i.id = root_id) THEN
-    RAISE EXCEPTION 'No item with id %', root_id;
-  END IF;
-
   start_time := clock_timestamp();
 
   -- get tree
@@ -70,8 +65,8 @@ BEGIN
       TRUE AS decendantsHaveSameRoute,
       FALSE AS containesProducts,
       FALSE AS is_mci,
-      CAST(NULL AS INTEGER) AS mci_id
-    FROM get_subtree(root_id);
+      CAST(NULL AS bigint) AS mci_id
+    FROM get_subtree(root_ids);
   
   RAISE NOTICE 'Duration of "get tree": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
