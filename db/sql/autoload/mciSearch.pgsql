@@ -54,7 +54,7 @@ CREATE
 OR REPLACE FUNCTION get_mci_info_tree (root_ids bigint[]) RETURNS TABLE (
   id bigint,
   is_mci boolean,
-  mci_id bigint,
+--  mci_id bigint,
   containedIn_id bigint,
   depth integer,
   sameRouteAsParent boolean,
@@ -73,7 +73,7 @@ BEGIN
     SELECT 
       *, 
       TRUE AS decendantsHaveSameRoute,
-      i.isProduct AS containesProducts,
+      true AS containesProducts,
       FALSE AS is_mci,
       CAST(NULL AS bigint) AS mci_id
     FROM get_subtree(root_ids) i;
@@ -145,25 +145,25 @@ BEGIN
     ;
 
   RAISE NOTICE 'Duration of "set is_mci": %', clock_timestamp() - start_time;
-  start_time := clock_timestamp();
+--  start_time := clock_timestamp();
+--
+--  -- set mci_id
+--  FOR j IN 0..max_depth LOOP
+--    UPDATE subtree i
+--    SET mci_id = CASE WHEN i.is_mci THEN i.id ELSE p.mci_id END
+--    FROM 
+--      subtree p
+--    WHERE i.depth = j AND i.containedIn_id = p.id;
+--  END LOOP;
 
-  -- set mci_id
-  FOR j IN 0..max_depth LOOP
-    UPDATE subtree i
-    SET mci_id = CASE WHEN i.is_mci THEN i.id ELSE p.mci_id END
-    FROM 
-      subtree p
-    WHERE i.depth = j AND i.containedIn_id = p.id;
-  END LOOP;
-
-  RAISE NOTICE 'Duration of "set mci_id": %', clock_timestamp() - start_time;
+--  RAISE NOTICE 'Duration of "set mci_id": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
 
   RETURN QUERY
     SELECT
       s.id,
       s.is_mci,
-      s.mci_id,
+--      s.mci_id,
       s.containedIn_id,
       s.depth,
       s.sameRouteAsParent,
