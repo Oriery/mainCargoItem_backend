@@ -83,7 +83,7 @@ BEGIN
 
   -- create indexes
   --CREATE INDEX ON subtree (id);
-  CREATE INDEX ON subtree (containedIn_id);
+  CREATE INDEX ON subtree (containedIn_id) INCLUDE (depth);
   --CREATE INDEX ON subtree (depth);
 
   RAISE NOTICE 'Duration of "create indexes": %', clock_timestamp() - start_time;
