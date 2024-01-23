@@ -51,7 +51,17 @@ $$ LANGUAGE SQL;
 DROP FUNCTION IF EXISTS get_mci_info_tree (bigint[]);
 
 CREATE
-OR REPLACE FUNCTION get_mci_info_tree (root_ids bigint[]) RETURNS TABLE (id bigint, is_mci boolean, mci_id bigint) AS $$
+OR REPLACE FUNCTION get_mci_info_tree (root_ids bigint[]) RETURNS TABLE (
+  id bigint,
+  is_mci boolean,
+  mci_id bigint,
+  containedIn_id bigint,
+  depth integer,
+  sameRouteAsParent boolean,
+  decendantsHaveSameRoute boolean,
+  isProduct boolean,
+  containesProducts boolean
+) AS $$
 DECLARE
   max_depth integer;
   start_time TIMESTAMP;
@@ -63,10 +73,10 @@ BEGIN
     SELECT 
       *, 
       TRUE AS decendantsHaveSameRoute,
-      FALSE AS containesProducts,
+      i.isProduct AS containesProducts,
       FALSE AS is_mci,
       CAST(NULL AS bigint) AS mci_id
-    FROM get_subtree(root_ids);
+    FROM get_subtree(root_ids) i;
   
   RAISE NOTICE 'Duration of "get tree": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
@@ -89,19 +99,26 @@ BEGIN
   FOR j IN REVERSE max_depth..0 LOOP
     UPDATE subtree i
     SET
-      decendantsHaveSameRoute = NOT EXISTS ( -- TODO: replace with JOIN if possible
+      decendantsHaveSameRoute = false
+    FROM 
+      subtree child
+    WHERE
+      i.depth = j 
+      AND child.containedIn_id = i.id 
+      AND (child.decendantsHaveSameRoute = false
+        OR child.samerouteasparent = false);
+  END LOOP;
+
+  RAISE NOTICE 'Duration of "set decendantsHaveSameRoute": %', clock_timestamp() - start_time;
+  start_time := clock_timestamp();
+
+  -- set containesProducts
+  FOR j IN REVERSE max_depth..0 LOOP
+    UPDATE subtree i
+    SET
+      containesProducts = EXISTS ( -- TODO: replace with JOIN if possible
         SELECT
-          *
-        FROM
-          subtree child
-        WHERE
-          child.containedIn_id = i.id
-          AND (child.decendantsHaveSameRoute = false
-          OR child.samerouteasparent = false)
-      ),
-      containesProducts = i.isProduct OR EXISTS ( -- TODO: replace with JOIN if possible
-        SELECT
-          *
+          1
         FROM
           subtree child
         WHERE
@@ -109,20 +126,23 @@ BEGIN
           AND child.containesProducts = true
       )
     WHERE
-      i.depth = j;
+      i.depth = j AND
+      i.isProduct = false;
   END LOOP;
 
-  RAISE NOTICE 'Duration of "set decendantsHaveSameRoute": %', clock_timestamp() - start_time;
+
+  RAISE NOTICE 'Duration of "set containesProducts": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
 
   -- set is_mci
   UPDATE subtree i
-  SET is_mci = 
-    i.decendantsHaveSameRoute = true
+  SET is_mci = true
   FROM subtree p
-  WHERE i.containedIn_id = p.id AND
-    p.decendantsHaveSameRoute = false AND 
-    i.containesProducts = true;
+  WHERE i.containedIn_id = p.id 
+    AND p.decendantsHaveSameRoute = false 
+    AND i.decendantsHaveSameRoute = true 
+    AND i.containesProducts = true
+    ;
 
   RAISE NOTICE 'Duration of "set is_mci": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
@@ -143,7 +163,13 @@ BEGIN
     SELECT
       s.id,
       s.is_mci,
-      s.mci_id
+      s.mci_id,
+      s.containedIn_id,
+      s.depth,
+      s.sameRouteAsParent,
+      s.isProduct,
+      s.decendantsHaveSameRoute,
+      s.containesProducts
     FROM
       subtree s;
 
