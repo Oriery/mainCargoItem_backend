@@ -167,8 +167,8 @@ BEGIN
       s.containedIn_id,
       s.depth,
       s.sameRouteAsParent,
-      s.isProduct,
       s.decendantsHaveSameRoute,
+      s.isProduct,
       s.containesProducts
     FROM
       subtree s;
