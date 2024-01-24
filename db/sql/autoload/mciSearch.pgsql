@@ -135,9 +135,9 @@ BEGIN
   RETURN QUERY
     SELECT
       i.id,
-      p.decendantsHaveSameRoute = false 
+      (p.decendantsHaveSameRoute = false 
         AND i.decendantsHaveSameRoute = true 
-        AND i.containesProducts = true as is_mci,
+        AND i.containesProducts = true) OR (i.containedIn_id is NULL AND i.decendantsHaveSameRoute = true) as is_mci,
       i.containedIn_id,
       i.depth,
       i.sameRouteAsParent,
@@ -146,7 +146,7 @@ BEGIN
       i.containesProducts
     FROM
       subtree i
-    JOIN subtree p ON i.containedIn_id = p.id;
+    LEFT JOIN subtree p ON i.containedIn_id = p.id;
 
 
   RAISE NOTICE 'Duration of "return query": %', clock_timestamp() - start_time;
