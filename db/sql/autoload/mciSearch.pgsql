@@ -158,3 +158,29 @@ BEGIN
   
 END;
 $$ LANGUAGE plpgsql;
+
+DROP PROCEDURE IF EXISTS update_mcis_of_transports (transport_ids integer[]);
+
+CREATE
+OR REPLACE PROCEDURE update_mcis_of_transports (transport_ids integer[]) LANGUAGE plpgsql AS $$
+BEGIN
+  UPDATE oriery_mci_item i
+  SET is_mci = mci.is_mci
+  FROM get_mci_info_tree(
+      ARRAY(SELECT item_id FROM oriery_mci_transport2rootitem WHERE transport_id = ANY(transport_ids))
+  ) mci
+  WHERE mci.id = i.id;
+END;
+$$;
+
+DROP PROCEDURE IF EXISTS update_mcis_of_root_items (rootItems_ids integer[]);
+
+CREATE
+OR REPLACE PROCEDURE update_mcis_of_root_items (rootItems_ids integer[]) LANGUAGE plpgsql AS $$
+BEGIN
+  UPDATE oriery_mci_item i
+  SET is_mci = mci.is_mci
+  FROM get_mci_info_tree(rootItems_ids) mci
+  WHERE mci.id = i.id;
+END;
+$$;

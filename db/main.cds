@@ -22,6 +22,7 @@ entity Item {
       containedIn  : Association to Item;
       fromLocation : Association to Location;
       toLocation   : Association to Location;
+      is_mci       : Boolean;
 }
 
 // TODO: current location/truck should be a field of Item instead of a separate entity?

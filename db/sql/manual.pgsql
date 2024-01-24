@@ -1,13 +1,5 @@
-SELECT
-  *
-FROM
-  get_mci_info_tree (
-    Array (
-      SELECT
-        item_id
-      FROM
-        oriery_mci_transport2rootitem
-      WHERE
-        transport_id = 0
-    )
-  )
+-- one container with id=0
+CALL update_mcis_of_root_items (ARRAY[0]);
+
+-- for whole transport with id=0
+CALL update_mcis_of_transports (ARRAY[0]);
