@@ -54,7 +54,6 @@ CREATE
 OR REPLACE FUNCTION get_mci_info_tree (root_ids bigint[]) RETURNS TABLE (
   id bigint,
   is_mci boolean,
---  mci_id bigint,
   containedIn_id bigint,
   depth integer,
   sameRouteAsParent boolean,
@@ -74,7 +73,6 @@ BEGIN
       *, 
       TRUE AS decendantsHaveSameRoute,
       true AS containesProducts,
-      FALSE AS is_mci,
       CAST(NULL AS bigint) AS mci_id
     FROM get_subtree(root_ids) i;
   
@@ -134,44 +132,22 @@ BEGIN
   RAISE NOTICE 'Duration of "set containesProducts": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
 
-  -- set is_mci
-  UPDATE subtree i
-  SET is_mci = true
-  FROM subtree p
-  WHERE i.containedIn_id = p.id 
-    AND p.decendantsHaveSameRoute = false 
-    AND i.decendantsHaveSameRoute = true 
-    AND i.containesProducts = true
-    ;
-
-  RAISE NOTICE 'Duration of "set is_mci": %', clock_timestamp() - start_time;
---  start_time := clock_timestamp();
---
---  -- set mci_id
---  FOR j IN 0..max_depth LOOP
---    UPDATE subtree i
---    SET mci_id = CASE WHEN i.is_mci THEN i.id ELSE p.mci_id END
---    FROM 
---      subtree p
---    WHERE i.depth = j AND i.containedIn_id = p.id;
---  END LOOP;
-
---  RAISE NOTICE 'Duration of "set mci_id": %', clock_timestamp() - start_time;
-  start_time := clock_timestamp();
-
   RETURN QUERY
     SELECT
-      s.id,
-      s.is_mci,
---      s.mci_id,
-      s.containedIn_id,
-      s.depth,
-      s.sameRouteAsParent,
-      s.decendantsHaveSameRoute,
-      s.isProduct,
-      s.containesProducts
+      i.id,
+      p.decendantsHaveSameRoute = false 
+        AND i.decendantsHaveSameRoute = true 
+        AND i.containesProducts = true as is_mci,
+      i.containedIn_id,
+      i.depth,
+      i.sameRouteAsParent,
+      i.decendantsHaveSameRoute,
+      i.isProduct,
+      i.containesProducts
     FROM
-      subtree s;
+      subtree i
+    JOIN subtree p ON i.containedIn_id = p.id;
+
 
   RAISE NOTICE 'Duration of "return query": %', clock_timestamp() - start_time;
   start_time := clock_timestamp();
