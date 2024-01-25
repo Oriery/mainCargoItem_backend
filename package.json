@@ -5,9 +5,10 @@
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "cds-serve",
-    "watch": "cds watch",
+    "watch": "cds watch --profile pg",
     "dev": "run-p 'watch'",
     "start:db": "docker-compose up -d",
     "create:db": "docker exec maincargoitem_backend-db-1 psql -U postgres -c \"CREATE DATABASE mci;\"",
@@ -18,7 +19,8 @@
   "dependencies": {
     "@cap-js/postgres": "^1.4.1",
     "@sap/cds": "^7",
-    "express": "^4"
+    "express": "^4",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^1",

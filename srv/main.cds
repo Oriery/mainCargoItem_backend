@@ -5,5 +5,9 @@ service MainService {
 
   entity ItemClass as projection on mci.ItemClass;
   entity Item      as projection on mci.Item;
+  entity Transport as projection on mci.Transport
+    actions {
+      action updateMcis();
+    }
 
 }
