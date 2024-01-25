@@ -9,7 +9,7 @@
   "scripts": {
     "start": "cds-serve",
     "watch": "cds watch --profile pg",
-    "dev": "run-p 'watch'",
+    "dev": "run-p 'watch' 'dev --prefix ./app'",
     "start:db": "docker-compose up -d",
     "create:db": "docker exec maincargoitem_backend-db-1 psql -U postgres -c \"CREATE DATABASE mci;\"",
     "deploy:db": "cds deploy --profile pg",

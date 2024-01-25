@@ -1,0 +1,41 @@
+{
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "^/app/(.*)$",
+      "target": "$1",
+      "localDir": ".",
+      "authenticationType": "none",
+      "cacheControl": "no-cache, no-store, must-revalidate"
+    },
+    {
+      "source": "^/(.*)$",
+      "target": "$1",
+      "destination": "srv-api",
+      "authenticationType": "none",
+      "csrfProtection": true
+    }
+  ],
+  "cors": [
+    {
+      "uriPattern": ".*",
+      "allowedMethods": ["OPTIONS", "POST", "GET", "HEAD", "DELETE", "PATCH"],
+      "allowedOrigin": [
+        {
+          "protocol": "http",
+          "host": "localhost",
+          "port": 5173
+        }
+      ],
+      "allowedHeaders": [
+        "Origin",
+        "Accept",
+        "X-Requested-With",
+        "Content-Type",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Authorization"
+      ]
+    }
+  ]
+}
